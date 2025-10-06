@@ -53,9 +53,9 @@ SECTION_BUNDLES = [
     (["Functional Scope"], ['pgm_name', 'type', 'explanation']),
     (["Functional Solution Approach"], ['pgm_name', 'type', 'explanation']),
     (["Output"], ['pgm_name', 'type', 'explanation']),
-    (["Functional Requirements"], ['pgm_name', 'type', 'explanation']),
-    (["Interfaces & Integration","Error Handling & Notifications", "Assumptions & Dependencies", "Authorization & Security"], [ 'selectionscreen', 'declarations', 'explanation']),
-    (["Test Scenario"], [ 'selectionscreen', 'declarations', 'explanation']),
+    (["Functional Requirements"], ['selectionscreen', 'declarations', 'explanation']),
+    (["Interfaces & Integration","Error Handling & Notifications", "Assumptions & Dependencies", "Authorization & Security"], ['selectionscreen', 'declarations', 'explanation']),
+    (["Test Scenario"], ['selectionscreen', 'declarations', 'explanation']),
     # (["Transport Management"], ['transport']),
     (["Sign-Off"], []),
 ]
