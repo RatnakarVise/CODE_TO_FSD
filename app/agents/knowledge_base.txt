@@ -7,17 +7,17 @@ prompt: List all title, project, client, version, and author (Keep its Value "PW
 #Introduction
 type: text
 description: Brief statement of document purpose, scope, and intended audience.
-prompt: Carefully analyze the payload(business_process, requirement_summary) and state the purpose, scope, and audience for this document.
+prompt: Carefully analyze the payload(pgm_name, type, explanation) and state the purpose, scope, and audience for this document as functional specification.
 
 #Business Requirement Overview
 type: text
 description: Concise statement of business requirements, business process pain points, and objectives of the proposed solution.
-prompt: Summarize the business requirements and objectives as provided in the payload(requirement_summary).
+prompt: Summarize the business requirements and objectives as provided in the payload.
 
 #Business Process Flow
 type: diagram
 description: High-level functional process flow of business requirement before and after solution, represented as sequential steps or branching decisions.
-prompt: Carefully analyze the payload(business_process) and present the process as an arrow-connected flow (Start -> Step1 -> Step2 -> … -> End). Show Yes/No branches if applicable. Only use actual provided details.
+prompt: Carefully analyze the payload and present the process as an arrow-connected flow (Start -> Step1 -> Step2 -> … -> End). Show Yes/No branches if applicable. Only use actual provided details.
 
 #Functional Scope
 type: text
@@ -33,13 +33,13 @@ prompt: Carefully analyze the payload and and for every functional scope provide
 type: table
 description: Table capturing all detailed functional requirements and associated business rules.
 fields: [Requirement ID, Requirement Description, Business Rule, Priority, Comments]
-prompt: Present all functional requirements and business rules in a table with the provided fields. Use values from payload(requirements, business_rules) or [To Be Filled] if missing.
+prompt: Present all functional requirements and business rules in a table with the provided fields. Use values from payload or [To Be Filled] if missing.
 
 #Interfaces & Integration
 type: table
 description: List of all functional interfaces (inbound, outbound, real-time, batch) and their purpose.
 fields: [Interface ID, Source System, Target System, Data/Message Type, Frequency/Mode, Description]
-prompt: Present the interface details strictly in table format based on payload(interface_details). Do not assume or invent.
+prompt: Present the interface details strictly in table format based on payload. Do not assume or invent.
 
 #Output
 type: text
@@ -70,7 +70,7 @@ prompt: >
 type: table
 description: Functional authorization requirements, roles, and access restrictions.
 fields: [Role/Profile, Authorization Object, Access Level, Description]
-prompt: Present the functional authorization requirements in table format using payload(security). If missing, mark as [To Be Filled].
+prompt: Present the functional authorization requirements in table format using payload. If missing, mark as [To Be Filled].
 
 #Error Handling & Notifications
 type: text
@@ -80,13 +80,13 @@ prompt: From the payload(requirements, business_rules), list all error handling 
 #Assumptions & Dependencies
 type: text
 description: List of assumptions and dependencies impacting functional design.
-prompt: Extract assumptions and dependencies from payload(assumptions, dependencies) and present in numbered format.
+prompt: Extract assumptions and dependencies from payload and present in numbered format.
 
 #Test Scenario
 type: table
 description: Functional test plan coverage/scenarios, input data, expected outputs, status.
 fields: [Test Case ID, Objective, Input Data, Expected Output, Actual Result/Status, Sign-off/Comments]
-prompt: Analyze the payload(requirements, ui_details, reports) and generate functional test cases in table format.
+prompt: Analyze the payload(selectionscreen, declarations and explanation) and generate functional test cases in table format.
 
 #Sign-Off
 type: table
