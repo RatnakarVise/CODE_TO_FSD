@@ -16,7 +16,7 @@ if openai_api_key:
     os.environ["OPENAI_API_KEY"] = openai_api_key
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 
-OPENAI_MODEL = "gpt-4.1"
+OPENAI_MODEL = "gpt-4o"
 TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "knowledge_base.txt")
 
 def load_sections_from_template(template_file: str) -> list:
@@ -48,12 +48,12 @@ def filter_payload_by_keys(payload: Dict[str, Any], required_keys: List[str]) ->
 # Each bundle is ( [section_name1, section_name2, ...], [payload_key1, payload_key2, ...])
 # NOT clubbed sections can be left as ["Section"], ["payload_key1"] so they're handled individually.
 SECTION_BUNDLES = [
+    (["Output"], ['pgm_name', 'type', 'explanation']),
+    (["Functional Requirements"], ['pgm_name', 'type', 'explanation']),
     (["Document Information", "Introduction", "Business Requirement Overview", "Business Process Flow"], ['pgm_name','type', 'inc_name', 'explanation']),
     (["UI Requirement"], ["selectionscreen"]),
     (["Functional Scope"], ['pgm_name', 'type', 'explanation']),
     (["Functional Solution Approach"], ['pgm_name', 'type', 'explanation']),
-    (["Output"], ['pgm_name', 'type', 'explanation']),
-    (["Functional Requirements"], ['selectionscreen', 'declarations', 'explanation']),
     (["Interfaces & Integration","Error Handling & Notifications", "Assumptions & Dependencies", "Authorization & Security"], ['selectionscreen', 'declarations', 'explanation']),
     (["Test Scenario"], ['selectionscreen', 'declarations', 'explanation']),
     # (["Transport Management"], ['transport']),

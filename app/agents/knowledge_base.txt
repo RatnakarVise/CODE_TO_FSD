@@ -33,7 +33,7 @@ prompt: Carefully analyze the payload and and for every functional scope provide
 type: table
 description: Table capturing all detailed functional requirements and associated business rules.
 fields: [Requirement ID, Requirement Description, Business Rule, Priority, Comments]
-prompt: Present all functional requirements and business rules in a table with the provided fields. Use values from payload(requirements, business_rules) or [To Be Filled] if missing.
+prompt: Present all functional requirements and business rules in a table with the provided fields. Use values from payload('pgm_name', 'type', 'explanation') or [To Be Filled] if missing.
 
 #Interfaces & Integration
 type: table
