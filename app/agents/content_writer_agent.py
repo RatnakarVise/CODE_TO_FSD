@@ -221,9 +221,16 @@ class ContentWriterAgent:
                     )
 
             try:
-                # LangChain call (tracing automatically captured in LangSmith)
-                response = await llm.agenerate([[HumanMessage(content=batched_prompt)]])
+                timeout_seconds = 600
+                # Wrap the LLM call in asyncio.wait_for to enforce timeout
+                response = await asyncio.wait_for(
+                    llm.agenerate([[HumanMessage(content=batched_prompt)]]),
+                    timeout=timeout_seconds
+                )
                 return response.generations[0][0].text.strip()
+            except asyncio.TimeoutError:
+                logger.warning(f"[Timeout] LLM call exceeded {timeout_seconds}s for sections: {sections_subset}")
+                return ""  # empty string indicates timeout
             except Exception as e:
                 logger.error(f"[Async Batch Error] {e}")
                 return ""
