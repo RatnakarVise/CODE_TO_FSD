@@ -16,7 +16,7 @@ if openai_api_key:
     os.environ["OPENAI_API_KEY"] = openai_api_key
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 
-OPENAI_MODEL = "gpt-4o"
+OPENAI_MODEL = "gpt-4.1"
 TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "knowledge_base.txt")
 
 def load_sections_from_template(template_file: str) -> list:
@@ -130,6 +130,7 @@ class ContentWriterAgent:
         batched_prompt += "- Strictly follow its 'BIBLE' (authoritative knowledge) shown for that section\n"
         batched_prompt += "- Use ONLY the information in the provided payload JSON\n"
         batched_prompt += "- For each section, output as:\n<<START:{Section Name}>>\n<content>\n<<END:{Section Name}>>\n\n"
+        batched_prompt += "- Srictly follow the name as mentioned. Do not change.\n"
         batched_prompt += "Important: You must output every section, even if the content is empty or you have no information. Do NOT skip any sections.\n"
         batched_prompt += f"\nThe relevant context (payload) for all these sections is:\n```json\n{context_json}\n```\n"
 
