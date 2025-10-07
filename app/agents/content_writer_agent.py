@@ -88,7 +88,7 @@ class ContentWriterAgent:
         # self.openai_client = openai.OpenAI(api_key=openai_api_key)
         self.llm = ChatOpenAI(
         model_name=self.model,
-        temperature=0.2,
+        temperature=0,
         verbose=True,
         api_key=openai_api_key
         )
@@ -181,7 +181,7 @@ class ContentWriterAgent:
         # Initialize LangChain LLM (tracing enabled)
         llm = ChatOpenAI(
             model_name=self.model,
-            temperature=0.1,
+            temperature=0,
             verbose=True,
             openai_api_key=openai_api_key
         )
