@@ -4,10 +4,16 @@ import logging
 from typing import Any, Dict, List
 import openai
 from dotenv import load_dotenv
+import asyncio
+# from langchain.chat_models import ChatOpenAI
+from langchain.schema import HumanMessage
+from langchain_openai import ChatOpenAI
+
 load_dotenv()
 logger = logging.getLogger("content_writer_agent")
 logging.basicConfig(level=logging.INFO)
-
+dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(dotenv_path=dotenv_path)
 langchain_api_key = os.getenv("LANGCHAIN_API_KEY")
 openai_api_key = os.getenv("OPENAI_API_KEY")
 if langchain_api_key:
@@ -15,6 +21,8 @@ if langchain_api_key:
 if openai_api_key:
     os.environ["OPENAI_API_KEY"] = openai_api_key
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
+if not openai_api_key:
+    raise ValueError("❌ OPENAI_API_KEY not found in environment variables.")
 
 OPENAI_MODEL = "gpt-4.1"
 TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "knowledge_base.txt")
@@ -59,7 +67,6 @@ SECTION_BUNDLES = [
     # (["Transport Management"], ['transport']),
     (["Sign-Off"], []),
 ]
-
 # =============================================================================
 
 def fetch_bible_knowledge(section_lookup, section_name):
@@ -78,27 +85,33 @@ class ContentWriterAgent:
     def __init__(self, model=OPENAI_MODEL, template_path=TEMPLATE_PATH):
         self.model = model
         self.template_path = template_path
-        self.openai_client = openai.OpenAI(api_key=openai_api_key)
+        # self.openai_client = openai.OpenAI(api_key=openai_api_key)
+        self.llm = ChatOpenAI(
+        model_name=self.model,
+        temperature=0.2,
+        verbose=True,
+        api_key=openai_api_key
+        )
         self.template_sections = load_sections_from_template(self.template_path)
-        self.results = []  # Will hold each row: {"section_name": "<>", "content": "<>"}
+        self.results = []
 
+    # --- Synchronous run ---
     def run(self, payload: Dict[str, Any]) -> List[Dict[str, str]]:
         if not payload:
             logger.error("No payload provided.")
             return [{"section_name": "ERROR", "content": "No payload provided"}]
 
         self.results = []
-
         handled_sections = set()
+
         for section_names, payload_keys in SECTION_BUNDLES:
-            for s in section_names:
-                if s in handled_sections:
-                    continue
             section_bibles = {s: fetch_bible_knowledge(self.template_sections, s) for s in section_names}
             sub_payload = filter_payload_by_keys(payload, payload_keys)
             logger.info(f"Generating content for sections: {section_names} with keys {payload_keys}")
 
-            section_texts = self.generate_sections(section_names, section_bibles, sub_payload)
+            # Use synchronous version (you can adapt later if needed)
+            section_texts = asyncio.run(self._generate_sections(section_names, section_bibles, sub_payload))
+
             for s in section_names:
                 self.results.append({
                     "section_name": s,
@@ -117,66 +130,128 @@ class ContentWriterAgent:
                 ordered_results.append({"section_name": section_name, "content": "[ERROR: Section content missing]"})
         return ordered_results
 
-    def generate_sections(self, section_names, section_bibles, payload) -> Dict[str, str]:
+    # --- Public async run method ---
+    async def run_async(self, payload: Dict[str, Any]) -> List[Dict[str, str]]:
         """
-        Given a list of section names, their bible (prompt), and the relevant payload,
-        ask LLM to generate them all in one go and split output into separate parts.
-        Returns dict of {section_name: content}
+        Async version of run() for use in FastAPI background tasks.
         """
-        # Compose a single prompt
-        context_json = json.dumps(payload, indent=2)
-        batched_prompt = "You are an expert SAP ABAP technical specification writer.\n"
-        batched_prompt += "You will generate content for multiple SECTIONS of an SAP ABAP document in one response. For each section:\n"
-        batched_prompt += "- Strictly follow its 'BIBLE' (authoritative knowledge) shown for that section\n"
-        batched_prompt += "- Use ONLY the information in the provided payload JSON\n"
-        batched_prompt += "- For each section, output as:\n<<START:{Section Name}>>\n<content>\n<<END:{Section Name}>>\n\n"
-        batched_prompt += "- Srictly follow the name as mentioned. Do not change.\n"
-        batched_prompt += "Important: You must output every section, even if the content is empty or you have no information. Do NOT skip any sections.\n"
-        batched_prompt += f"\nThe relevant context (payload) for all these sections is:\n```json\n{context_json}\n```\n"
+        if not payload:
+            logger.error("No payload provided.")
+            return [{"section_name": "ERROR", "content": "No payload provided"}]
 
-        for idx, s in enumerate(section_names):
-            batched_prompt += f"\n====== SECTION: {s} ======\n"
-            batched_prompt += f"---START BIBLE---\n{section_bibles.get(s, '')}\n---END BIBLE---\n"
-            batched_prompt += f"Generate the content for section titled '{s}'. Do NOT output any headings or numbers. Only the body/content as per BIBLE.\n\n"
-            # Special handling (Flow Diagram, etc)
-            if s.strip().lower() == "flow diagram":
-                batched_prompt += (
-                    "\nEXTRA INSTRUCTIONS FOR THIS SECTION:"
-                    "\n1. Output ONLY a single line, listing all the process steps joined by '->', e.g.:"
-                    "\n   Start -> Get Input -> Validate -> Save -> End"
-                    "\n2. DO NOT return code, code block, bullets, text, prose, explanations, legend, markdown, or headings."
-                    "\n3. Do NOT return 'Flow Diagram', 'Diagram:', 'mermaid', or anything else. Just the process flow line."
-                    "\n4. Do NOT use markdown, do NOT use mermaid, ONLY reply one line: Step1 -> Step2 -> ... -> StepN"
-                    "\n5. If there are NO relevant ABAP logic/process steps, output: 'Start -> No Relevant Logic -> End'."  
-                    "\n6. - Format [Linear:  A -> B -> C ]  - [ Branching: A -> [Yes] B -> [No] C ] [ Multiple branches, separated by ';']"
-                )
+        self.results = []
+        handled_sections = set()
 
+        for section_names, payload_keys in SECTION_BUNDLES:
+            section_bibles = {s: fetch_bible_knowledge(self.template_sections, s) for s in section_names}
+            sub_payload = filter_payload_by_keys(payload, payload_keys)
+            logger.info(f"[Async] Generating content for sections: {section_names} with keys {payload_keys}")
 
-        try:
-            response = self.openai_client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": "You are a professional SAP ABAP documentation expert."},
-                    {"role": "user", "content": batched_prompt}
-                ],
-                temperature=0.1
-                # max_tokens omitted!
-            )
-            output = response.choices[0].message.content.strip()
-            # Now split output into sections
-            # Split output into sections using delimiters
-            result = {}
+            section_texts = await self._generate_sections(section_names, section_bibles, sub_payload)
+
             for s in section_names:
-                start_tag = f"<<START:{s}>>"
-                end_tag = f"<<END:{s}>>"
-                section_content = ""
+                self.results.append({
+                    "section_name": s,
+                    "content": section_texts.get(s, f"[Error: Missing output for section {s}]")
+                })
+                handled_sections.add(s)
+
+        # Guarantee template order
+        template_order = [s["title"] for s in self.template_sections]
+        ordered_results = []
+        for section_name in template_order:
+            matched = next((x for x in self.results if x["section_name"] == section_name), None)
+            if matched:
+                ordered_results.append(matched)
+            else:
+                ordered_results.append({"section_name": section_name, "content": "[ERROR: Section content missing]"})
+        return ordered_results
+
+    # --- Private async section generator ---
+    # --- Private async section generator with LangChain / LangSmith ---
+    async def _generate_sections(self, section_names, section_bibles, payload, max_retries=3) -> Dict[str, str]:
+        """
+        Generate each section’s content using LangChain ChatOpenAI (LangSmith tracing enabled),
+        with automatic retries for missing sections. Returns dict {section_name: content}.
+        """
+
+        results = {}
+        remaining_sections = section_names.copy()
+
+        # Initialize LangChain LLM (tracing enabled)
+        llm = ChatOpenAI(
+            model_name=self.model,
+            temperature=0.1,
+            verbose=True,
+            openai_api_key=openai_api_key
+        )
+
+        async def call_llm_for_sections(sections_subset):
+            context_json = json.dumps(payload, indent=2)
+            batched_prompt = (
+                "You are an expert SAP ABAP functional specification writer.\n"
+                "Srictly follow the section names as mentioned. Do not infere any other similar name\n"
+                "Generate content for multiple SECTIONS of an SAP ABAP document.\n"
+                "For each section:\n"
+                "- Follow its 'BIBLE' strictly.\n"
+                "- Use ONLY info from the JSON payload.\n"
+                "- Output each section in format:\n"
+                "<<START:{Section Name}>>\n<content>\n<<END:{Section Name}>>\n\n"
+                f"Payload:\n```json\n{context_json}\n```\n"
+            )
+
+            for s in sections_subset:
+                batched_prompt += f"\n====== SECTION: {s} ======\n"
+                batched_prompt += f"---START BIBLE---\n{section_bibles.get(s, '')}\n---END BIBLE---\n"
+                batched_prompt += f"Generate content for '{s}'. No titles or numbering.\n"
+                batched_prompt += (
+                        "\nIMPORTANT:\n"
+                        "Output for each section *must* exactly follow this format:\n"
+                        "<<START:{Section Name as given below}>>\n"
+                        "<your content>\n"
+                        "<<END:{Section Name as given below}>>\n"
+                        "Do not modify section names (no plural/singular change, no rewording).\n"
+                    )
+                if s.strip().lower() == "flow diagram":
+                    batched_prompt += (
+                        "\nEXTRA INSTRUCTIONS:\n"
+                        "1. Output one line: Step1 -> Step2 -> Step3.\n"
+                        "2. No markdown, no code, no prose.\n"
+                        "3. If none, output: Start -> No Relevant Logic -> End.\n"
+                    )
+
+            try:
+                # LangChain call (tracing automatically captured in LangSmith)
+                response = await llm.agenerate([[HumanMessage(content=batched_prompt)]])
+                return response.generations[0][0].text.strip()
+            except Exception as e:
+                logger.error(f"[Async Batch Error] {e}")
+                return ""
+
+        # --- Retry loop ---
+        for attempt in range(1, max_retries + 1):
+            if not remaining_sections:
+                break
+
+            logger.info(f"🌀 Attempt {attempt} for sections: {remaining_sections}")
+            output = await call_llm_for_sections(remaining_sections)
+            logger.debug(f"🧾 Raw LLM Output:\n{output[:1500]}")
+            newly_completed = []
+            for s in remaining_sections:
+                start_tag, end_tag = f"<<START:{s}>>", f"<<END:{s}>>"
                 if start_tag in output and end_tag in output:
-                    section_content = output.split(start_tag, 1)[1].split(end_tag, 1)[0].strip()
+                    content = output.split(start_tag, 1)[1].split(end_tag, 1)[0].strip()
+                    results[s] = content
+                    newly_completed.append(s)
                 else:
-                    section_content = f"[Error: Section {s} not found in LLM output.]"
-                result[s] = section_content
-            return result
-        except Exception as e:
-            logger.error(f"AI generation failed for sections {section_names}: {e}")
-            # Return all as error entries
-            return {s: f"[Error: AI section generation failed for '{s}': {e}]" for s in section_names}
+                    logger.warning(f"[Attempt {attempt}] Missing section: {s}")
+
+            remaining_sections = [s for s in remaining_sections if s not in newly_completed]
+            if remaining_sections:
+                await asyncio.sleep(1.5)
+
+        # --- Fill missing after all retries ---
+        for s in remaining_sections:
+            results[s] = f"[Error: Section {s} not found after {max_retries} retries.]"
+
+        return results
