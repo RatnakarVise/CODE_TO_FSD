@@ -29,6 +29,11 @@ type: text
 description: High-level description of how the business requirement will be addressed functionally.
 prompt: Carefully analyze the payload and and for every functional scope provide the functional solution approach in detail as: 1. … 2. … 3. …
 
+#Processing logic
+type: text
+description: Detailed stepwise narrative of program flow and key processing stages, based strictly on the implemented code (do not infer unimplemented or generic behaviors). For each select query include all fields logic and where condition. 
+prompt: Carefully analyze the provided payload(pgm_name, type, explanation) and describe the main program steps and the flow of control, including key processing stages, major conditionals (IF/CASE statements), and iterations (loops). Only include logic that is explicitly present in the payload explanation and omit any general or assumed SAP behavior. Present the explanation as a clear, sequential, step-by-step or bullet-point, reflecting the actual implemented logic found in payload explanation.
+
 #Functional Requirements
 type: text
 description: Capture all detailed functional requirements and associated business rules.
