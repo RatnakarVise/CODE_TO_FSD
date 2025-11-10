@@ -6,7 +6,7 @@ import openai
 from dotenv import load_dotenv
 import asyncio
 # from langchain.chat_models import ChatOpenAI
-from langchain.schema import HumanMessage
+from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
 
 load_dotenv()
