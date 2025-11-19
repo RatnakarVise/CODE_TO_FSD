@@ -57,7 +57,8 @@ def filter_payload_by_keys(payload: Dict[str, Any], required_keys: List[str]) ->
 # NOT clubbed sections can be left as ["Section"], ["payload_key1"] so they're handled individually.
 SECTION_BUNDLES = [
     (["Output"], ['pgm_name', 'type', 'explanation']),
-    (["Functional Requirements"], ['pgm_name', 'type', 'explanation', 'FIELD_LOGIC']),
+    (["Functional Requirements"], ['pgm_name', 'type', 'explanation']),
+    (["Field Logic"], ['FIELD_LOGIC']),
     (["Document Information", "Introduction", "Business Requirement Overview", "Business Process Flow"], ['pgm_name','type', 'inc_name', 'explanation']),
     (["UI Requirement"], ["selectionscreen"]),
     (["Functional Scope"], ['pgm_name', 'type', 'explanation']),
