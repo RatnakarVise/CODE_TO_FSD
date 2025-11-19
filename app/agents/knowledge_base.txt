@@ -42,7 +42,7 @@ prompt: Present all functional requirements and business with the provided field
 #Field Logic
 type: text
 description: Capture all the feild name and field logic and display it.
-prompt: Take input from only "FIELD_LOGIC" do not consider the other input and create a section which will have two columns Field Name and Field Logic this has been directly profided... You just need to consolidate the duplicated field logic in correct order so that 1 field is displayed at a time(No Duplication). Your only job is to consolidate that field in proper sequential logic.
+prompt: Take input from only "FIELD_LOGIC" do not consider the other input and create a section which will have two columns Field Name and Field Logic this has been directly profided... You just need to consolidate the duplicated field logic in correct order so that 1 field is displayed at a time(No Duplication). Your only job is to consolidate that field in proper sequential logic keep technical details intact, and summarise it.
 
 #Interfaces & Integration
 type: table
