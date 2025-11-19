@@ -40,10 +40,9 @@ description: Capture all detailed functional requirements and associated busines
 prompt: Present all functional requirements and business with the provided fields. Use values from payload('pgm_name', 'type', 'explanation') or [To Be Filled] if missing.
 
 #Field Logic
-type: table
-Table fields: Field Name, Field Logic
-description: Capture all the feild name and field logic and display it in table format.
-prompt: Take input from only "FIELD_LOGIC" do not consider the other input and create a table which will have two columns Field Name and Field Logic this has been directly profided... You just need to consolidate the duplicated field logic in correct order so that 1 field is displayed at a time(No Duplication). Your only job is to consolidate that field in proper sequential logic.
+type: text
+description: Capture all the feild name and field logic and display it.
+prompt: Take input from only "FIELD_LOGIC" do not consider the other input and create a section which will have two columns Field Name and Field Logic this has been directly profided... You just need to consolidate the duplicated field logic in correct order so that 1 field is displayed at a time(No Duplication). Your only job is to consolidate that field in proper sequential logic.
 
 #Interfaces & Integration
 type: table

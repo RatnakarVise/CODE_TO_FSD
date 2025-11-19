@@ -50,6 +50,23 @@ def filter_payload_by_keys(payload: Dict[str, Any], required_keys: List[str]) ->
     if not required_keys:
         return payload
     return {k: payload[k] for k in required_keys if k in payload}
+def consolidate_field_logic(field_logic_list):
+    merged = {}
+    for item in field_logic_list:
+        fname = item.get("FIELD_NAME")
+        flogic = item.get("FIELD_LOGIC", "").strip()
+
+        if not fname:
+            continue
+
+        if fname not in merged:
+            merged[fname] = flogic
+        else:
+            # Append only if new logic adds info
+            if flogic not in merged[fname]:
+                merged[fname] += " " + flogic
+
+    return [{"FIELD_NAME": k, "FIELD_LOGIC": v} for k, v in merged.items()]
 
 # =============================================================================
 # 💡 HERE you define how to club which sections and what payload keys to use
@@ -103,6 +120,11 @@ class ContentWriterAgent:
             logger.error("No payload provided.")
             return [{"section_name": "ERROR", "content": "No payload provided"}]
 
+                # 🔥 FIELD_LOGIC consolidation added here
+        if "FIELD_LOGIC" in payload and isinstance(payload["FIELD_LOGIC"], list):
+            payload["FIELD_LOGIC"] = consolidate_field_logic(payload["FIELD_LOGIC"])
+            logger.info(f"FIELD_LOGIC consolidated to {len(payload['FIELD_LOGIC'])} unique fields")
+
         self.results = []
         handled_sections = set()
 
@@ -143,6 +165,11 @@ class ContentWriterAgent:
 
         self.results = []
         handled_sections = set()
+
+                # 🔥 FIELD_LOGIC consolidation added here
+        if "FIELD_LOGIC" in payload and isinstance(payload["FIELD_LOGIC"], list):
+            payload["FIELD_LOGIC"] = consolidate_field_logic(payload["FIELD_LOGIC"])
+            logger.info(f"FIELD_LOGIC consolidated to {len(payload['FIELD_LOGIC'])} unique fields")
 
         for section_names, payload_keys in SECTION_BUNDLES:
             section_bibles = {s: fetch_bible_knowledge(self.template_sections, s) for s in section_names}
